@@ -10,8 +10,8 @@ function card(task) {
   const review = task.status === "needs_review";
   const term = escape(task.term);
   const reference = task.team_definition
-    ? `<p class="definition"><strong>Team definition</strong> · ${escape(task.team_definition)}</p>`
-    : `<p class="reference" data-reference="${term}">Loading public reference…</p><p class="links"><a href="https://www.google.com/search?q=${encodeURIComponent(task.term)}" target="_blank" rel="noreferrer">Search Google ↗</a> <a href="https://en.wikipedia.org/wiki/${encodeURIComponent(task.term)}" target="_blank" rel="noreferrer">Open Wikipedia ↗</a></p>`;
+    ? `<details class="explanation"><summary>Team definition</summary><p class="definition">${escape(task.team_definition)}</p></details>`
+    : `<details class="explanation"><summary>Public reference · zero AI</summary><p class="reference" data-reference="${term}">Loading public reference…</p><p class="links"><a href="https://www.google.com/search?q=${encodeURIComponent(task.term)}" target="_blank" rel="noreferrer">Search Google ↗</a> <a href="https://en.wikipedia.org/wiki/${encodeURIComponent(task.term)}" target="_blank" rel="noreferrer">Open Wikipedia ↗</a></p></details>`;
   return `<article class="task ${review ? "review-task" : "aligned-task"}"><p class="eyebrow">${review ? "Needs team review" : "Automatically aligned"}</p><h3>${term}</h3>${reference}<p>${escape(task.reason)}</p><small>${task.sightings} sighting${task.sightings === 1 ? "" : "s"} · ${escape(task.source)}</small>${review ? `<button data-term="${term}" class="review-button">Review this term</button>` : ""}</article>`;
 }
 function escape(value) { return value.replace(/[&<>'"]/g, (character) => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;","\"":"&quot;"})[character]); }
