@@ -2,15 +2,15 @@
 
 ## 0:00–0:20 — problem and privacy
 
-Open the Cloud Run URL. Explain that agent vocabulary travels faster than a team’s shared understanding. Point to the privacy statement: this project does not collect or display agent transcripts.
+Open the Cloud Run URL. Explain that agent vocabulary travels faster than a team’s shared understanding. Point to the privacy statement: the connector emits candidate terms and a source category, not agent transcripts.
 
-## 0:20–1:05 — live Gemini Collaborative Partner
+## 0:20–1:10 — autonomous learning run
 
-Enter a confusing term and one optional sentence of context. Show the response’s source label, plain-language definition, why it matters, next action, and any clarification. Explain that the request runs through Google ADK to Gemini.
+Click **Run demo incoming feed**. Show that the agent receives a batch of candidate terms, automatically aligns a known term, deduplicates repeats, and creates review work only for unknown terms. This is the event-driven work the agent completes before asking a person for help.
 
-## 1:05–1:55 — shared learning loop
+## 1:10–2:05 — shared learning loop
 
-As Member A, enter a concise corrected explanation and save it. Switch the selector to Member B, clear the optional context, and request the same term. Show that the source now says `team memory + Gemini + ADK` and that the new definition appears.
+Open one review task. Ask Gemini to draft a concise explanation, improve it as Member A, and approve it. Run the incoming feed again: the term now moves to **Automatically aligned**. Explain that all future team members inherit this decision without seeing the originating output.
 
 ## 1:55–2:30 — Google Cloud proof
 

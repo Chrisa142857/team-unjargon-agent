@@ -32,6 +32,20 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(answer.json()["definition"], "A short operational recovery guide.")
         self.assertEqual(answer.json()["source"], "team memory")
 
+    def test_detection_event_creates_review_only_for_unknown_terms(self):
+        response = self.client.post(
+            "/api/detection-events",
+            json={"source": "Codex", "candidates": ["ADR", "RAG", "RAG"]},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["received"], 2)
+        self.assertEqual(response.json()["aligned"], 1)
+        self.assertEqual(response.json()["needs_review"], 1)
+        inbox = self.client.get("/api/inbox").json()["tasks"]
+        rag = next(task for task in inbox if task["term"] == "RAG")
+        self.assertEqual(rag["status"], "needs_review")
+        self.assertNotIn("context", rag)
+
 
 if __name__ == "__main__":
     unittest.main()

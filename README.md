@@ -1,6 +1,6 @@
 # Team unjargon agent
 
-A Gemini Collaborative Partner for AI-native teams. It turns one confusing term into a concise explanation, learns from explicit team corrections, and never collects an agent transcript.
+A Gemini Collaborative Partner that automatically maintains an AI-native team's shared vocabulary. It receives detected term candidates from a privacy-preserving connector, aligns known terms, and asks the team to review only unresolved meanings.
 
 **Live demo:** https://team-unjargon-agent-170101312348.us-central1.run.app
 
@@ -13,7 +13,7 @@ pip install -r requirements.txt
 TEAM_UNJARGON_DEMO_MODE=true uvicorn app.main:app --reload
 ```
 
-Open `http://127.0.0.1:8000`. Ask about `ADR`, save a correction as Member A, switch to Member B, and ask again. Run the regression checks with:
+Open `http://127.0.0.1:8000` and choose **Run demo incoming feed**. The agent receives candidate terms only, automatically aligns `ADR` when known, and creates review tasks for unknown terms. Open a review task, generate a Gemini draft, then approve it; later detections will align automatically. Run the regression checks with:
 
 ```bash
 python -m unittest discover -s tests -v
@@ -36,6 +36,6 @@ gcloud run deploy team-unjargon-agent \
 
 3. Grant the Cloud Run runtime service account the least-privilege Firestore access and the Vertex AI User role. Then seed one term through the UI and show the two-member retrieval flow.
 
-The live path uses Google ADK (`LlmAgent`, `Runner`, and `InMemorySessionService`) to call Gemini. The only persistent records are team terms and explicit feedback. Set `GEMINI_MODEL` to the Gemini 3.5 model when that model is enabled for the project; the deployed compatibility baseline is Gemini 2.5 Flash.
+The live path uses Google ADK (`LlmAgent`, `Runner`, and `InMemorySessionService`) to call Gemini. The only persistent records are team terms, candidate-derived task state, and explicit feedback — never an agent message or short context. Set `GEMINI_MODEL` to Gemini 3.5 Flash when that model is enabled for the project; the deployed compatibility baseline is Gemini 2.5 Flash.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md), [PRE_EXISTING_WORK.md](PRE_EXISTING_WORK.md), and [DEMO.md](DEMO.md).

@@ -3,24 +3,30 @@
   <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Team unjargon agent</title><link rel="stylesheet" href="/styles.css"></head>
   <body>
     <main>
-      <p class="eyebrow">Gemini Collaborative Partner</p>
+      <p class="eyebrow">Event-driven Gemini Collaborative Partner</p>
       <h1>Team unjargon agent</h1>
-      <p class="lede">Turn confusing agent vocabulary into team-approved learning — without sharing a teammate’s transcript.</p>
-      <aside><strong>Private by default.</strong> This demo sends a term and optional short context for the current answer. Team memory stores only explicit corrections and useful feedback, never a raw conversation.</aside>
-      <section class="card">
-        <label>Demo member <select id="member"><option>Member A</option><option>Member B</option></select></label>
-        <label>Confusing term <input id="term" maxlength="80" value="ADR" placeholder="e.g. ADR"></label>
-        <label>Optional context — not stored <textarea id="context" maxlength="500" placeholder="One sentence is enough."></textarea></label>
-        <button id="explain">Explain for my team</button>
+      <p class="lede">Your team’s AI vocabulary stays aligned without asking people to submit terms one by one.</p>
+      <aside><strong>Private by design.</strong> Connected detectors send only high-confidence term candidates and a source category. This service never receives or stores an agent transcript.</aside>
+
+      <section class="card hero-card">
+        <div><p class="eyebrow">Autonomous learning run</p><h2>Incoming agent vocabulary</h2><p>Detectors emit candidates in the background. The agent deduplicates them, matches known team terms, and creates review work only where the team is not aligned.</p></div>
+        <button id="simulate">Run demo incoming feed</button>
+        <p id="run-status" aria-live="polite"></p>
+      </section>
+
+      <section class="inbox-head"><div><p class="eyebrow">Team learning inbox</p><h2>Only the terms that need your judgment</h2></div><div id="counts" class="counts"></div></section>
+      <section id="inbox" class="inbox" aria-live="polite"></section>
+
+      <section id="review" class="card hidden" aria-live="polite">
+        <p class="eyebrow">Review task</p><h2 id="review-term"></h2><p id="review-reason"></p>
+        <label>Reviewer <select id="member"><option>Member A</option><option>Member B</option></select></label>
+        <button id="draft">Draft an explanation with Gemini</button>
         <p id="error" role="alert"></p>
+        <div id="result" class="hidden"><p class="source" id="source"></p><h3 id="definition"></h3><p id="why"></p><p><strong>Next action:</strong> <span id="next"></span></p><p id="clarification"></p>
+          <label>Approve or improve team wording <textarea id="correction" maxlength="400"></textarea></label><button id="save-correction">Approve for the team</button><p id="feedback-status"></p>
+        </div>
       </section>
-      <section id="result" class="card hidden" aria-live="polite">
-        <p class="source" id="source"></p><h2 id="definition"></h2><p id="why"></p><p><strong>Next learning action:</strong> <span id="next"></span></p><p id="clarification"></p>
-        <div class="feedback"><button id="useful">Useful ✓</button><button id="show-correction">Improve team explanation</button></div>
-        <div id="correction-box" class="hidden"><label>Team-approved wording <textarea id="correction" maxlength="400"></textarea></label><button id="save-correction">Save for both members</button></div>
-        <p id="feedback-status"></p>
-      </section>
-      <footer>Demo loop: Member A saves a correction; switch to Member B and ask the same term to retrieve shared team memory.</footer>
+      <footer>Production connector contract: <code>POST /api/detection-events</code> with candidate terms only. A local detector can emit events automatically from Claude Code or Codex without sending the conversation.</footer>
     </main><script src="/app.js"></script>
   </body>
 </html>

@@ -48,6 +48,11 @@ class FeedbackRequest(BaseModel):
     correction: str = ""
 
 
+class DetectionEventRequest(BaseModel):
+    source: str
+    candidates: list[str]
+
+
 def clean(value: str, name: str, limit: int) -> str:
     result = value.strip()
     if not result:
@@ -93,6 +98,31 @@ async def explain(request: ExplainRequest):
         return vars(await partner.explain(TEAM_ID, member, term, context))
     except RuntimeError as error:
         raise HTTPException(503, str(error)) from error
+
+
+@app.get("/api/inbox")
+def inbox():
+    return {"tasks": [vars(task) for task in memory.list_tasks(TEAM_ID)]}
+
+
+@app.post("/api/detection-events")
+def detection_events(request: DetectionEventRequest):
+    source = clean(request.source, "Source", 40)
+    candidates = []
+    for candidate in request.candidates[:12]:
+        term = candidate.strip()
+        if term and len(term) <= 80 and term not in candidates:
+            candidates.append(term)
+    if not candidates:
+        raise HTTPException(422, "At least one detected term is required.")
+    # The event carries candidates only. Raw agent output is never accepted or persisted here.
+    tasks = memory.observe_terms(TEAM_ID, candidates, source)
+    return {
+        "received": len(candidates),
+        "aligned": sum(task.status == "aligned" for task in tasks),
+        "needs_review": sum(task.status == "needs_review" for task in tasks),
+        "tasks": [vars(task) for task in tasks],
+    }
 
 
 @app.post("/api/feedback")
