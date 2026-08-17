@@ -8,7 +8,22 @@ async function request(path, body) {
 }
 function card(task) {
   const review = task.status === "needs_review";
-  return `<article class="task ${review ? "review-task" : "aligned-task"}"><p class="eyebrow">${review ? "Needs team review" : "Automatically aligned"}</p><h3>${task.term}</h3><p>${task.reason}</p><small>${task.sightings} sighting${task.sightings === 1 ? "" : "s"} · ${task.source}</small>${review ? `<button data-term="${task.term}" class="review-button">Review this term</button>` : ""}</article>`;
+  const term = escape(task.term);
+  const reference = task.team_definition
+    ? `<p class="definition"><strong>Team definition</strong> · ${escape(task.team_definition)}</p>`
+    : `<p class="reference" data-reference="${term}">Loading public reference…</p><p class="links"><a href="https://www.google.com/search?q=${encodeURIComponent(task.term)}" target="_blank" rel="noreferrer">Search Google ↗</a> <a href="https://en.wikipedia.org/wiki/${encodeURIComponent(task.term)}" target="_blank" rel="noreferrer">Open Wikipedia ↗</a></p>`;
+  return `<article class="task ${review ? "review-task" : "aligned-task"}"><p class="eyebrow">${review ? "Needs team review" : "Automatically aligned"}</p><h3>${term}</h3>${reference}<p>${escape(task.reason)}</p><small>${task.sightings} sighting${task.sightings === 1 ? "" : "s"} · ${escape(task.source)}</small>${review ? `<button data-term="${term}" class="review-button">Review this term</button>` : ""}</article>`;
+}
+function escape(value) { return value.replace(/[&<>'"]/g, (character) => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;","\"":"&quot;"})[character]); }
+async function loadPublicReferences() {
+  for (const target of document.querySelectorAll("[data-reference]")) {
+    const term = target.dataset.reference;
+    try {
+      const response = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(term)}`);
+      const data = await response.json();
+      target.textContent = data.extract ? `Public reference · zero AI — ${data.extract}` : "Public reference unavailable; use the links below.";
+    } catch { target.textContent = "Public reference unavailable; use the links below."; }
+  }
 }
 async function loadInbox() {
   const {tasks} = await request("/api/inbox");
@@ -17,6 +32,7 @@ async function loadInbox() {
   $("counts").textContent = `${review.length} need review · ${aligned} aligned automatically`;
   $("inbox").innerHTML = tasks.length ? tasks.map(card).join("") : `<p class="empty">Waiting for a connected detector. The agent will build this inbox automatically.</p>`;
   document.querySelectorAll(".review-button").forEach((button) => button.onclick = () => openReview(tasks.find((task) => task.term === button.dataset.term)));
+  loadPublicReferences();
 }
 function openReview(task) {
   currentTask = task;

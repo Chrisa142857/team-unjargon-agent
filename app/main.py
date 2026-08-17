@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -102,7 +103,13 @@ async def explain(request: ExplainRequest):
 
 @app.get("/api/inbox")
 def inbox():
-    return {"tasks": [vars(task) for task in memory.list_tasks(TEAM_ID)]}
+    tasks = []
+    for task in memory.list_tasks(TEAM_ID):
+        item = vars(task)
+        record = memory.get_term(TEAM_ID, task.term)
+        item["team_definition"] = record.definition if record else None
+        tasks.append(item)
+    return {"tasks": tasks}
 
 
 @app.post("/api/detection-events")
@@ -111,7 +118,7 @@ def detection_events(request: DetectionEventRequest):
     candidates = []
     for candidate in request.candidates[:12]:
         term = candidate.strip()
-        if term and len(term) <= 80 and term not in candidates:
+        if re.fullmatch(r"[A-Za-z][A-Za-z0-9 -]{0,78}", term) and term not in candidates:
             candidates.append(term)
     if not candidates:
         raise HTTPException(422, "At least one detected term is required.")

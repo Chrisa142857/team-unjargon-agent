@@ -49,6 +49,8 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.json()["aligned"], 1)
         self.assertEqual(response.json()["needs_review"], 1)
         inbox = self.client.get("/api/inbox").json()["tasks"]
+        adr = next(task for task in inbox if task["term"] == "ADR")
+        self.assertIn("Architecture Decision Record", adr["team_definition"])
         rag = next(task for task in inbox if task["term"] == "RAG")
         self.assertEqual(rag["status"], "needs_review")
         self.assertNotIn("context", rag)
