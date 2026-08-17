@@ -19,15 +19,16 @@ def create_memory():
         project_id = os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv("GCP_PROJECT_ID")
         if not project_id:
             raise RuntimeError("GOOGLE_CLOUD_PROJECT is required when USE_FIRESTORE=true.")
-        return FirestoreTeamMemory(project_id)
-    memory = InMemoryTeamMemory()
-    memory.seed(
+        repo = FirestoreTeamMemory(project_id)
+    else:
+        repo = InMemoryTeamMemory()
+    repo.seed(
         TEAM_ID,
         "ADR",
         "An Architecture Decision Record is a short, durable note explaining one important technical choice.",
         "Our team uses ADRs to prevent an AI agent or new teammate from reopening an already-settled decision.",
     )
-    return memory
+    return repo
 
 
 memory = create_memory()

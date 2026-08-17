@@ -2,7 +2,7 @@
 
 A Gemini Collaborative Partner that automatically maintains an AI-native team's shared vocabulary. It receives detected term candidates from a privacy-preserving connector, aligns known terms, and asks the team to review only unresolved meanings.
 
-**Live demo:** https://team-unjargon-agent-170101312348.us-central1.run.app
+**Live demo:** https://team-unjargon-agent-gwygowb26q-uc.a.run.app
 
 ## Local demo
 

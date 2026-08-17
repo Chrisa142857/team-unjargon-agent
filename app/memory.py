@@ -106,6 +106,11 @@ class FirestoreTeamMemory:
     def _tasks(self, team_id: str):
         return self.client.collection("teams").document(team_id).collection("tasks")
 
+    def seed(self, team_id: str, term: str, definition: str, team_context: str) -> None:
+        ref = self._terms(team_id).document(normalize(term))
+        if not ref.get().exists:
+            ref.set(asdict(TermRecord(term, definition, team_context, updated_at=now())))
+
     def get_term(self, team_id: str, term: str) -> TermRecord | None:
         snapshot = self._terms(team_id).document(normalize(term)).get()
         return TermRecord(**snapshot.to_dict()) if snapshot.exists else None
