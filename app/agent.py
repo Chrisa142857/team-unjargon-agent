@@ -21,7 +21,7 @@ class TeamUnjargonPartner:
     def __init__(self, memory: TeamMemory) -> None:
         self.memory = memory
         self.demo_mode = os.getenv("TEAM_UNJARGON_DEMO_MODE", "true").lower() == "true"
-        self.model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+        self.model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
     async def explain(self, team_id: str, member: str, term: str, context: str) -> Explanation:
         record = self.memory.get_term(team_id, term)
@@ -73,13 +73,16 @@ class TeamUnjargonPartner:
         await sessions.create_session(app_name="team_unjargon", user_id=user_id, session_id=session_id)
         prompt = f"Term: {term}\nOptional member context: {context or '(none)'}"
         answer = ""
-        async for event in runner.run_async(
-            user_id=user_id,
-            session_id=session_id,
-            new_message=types.Content(role="user", parts=[types.Part(text=prompt)]),
-        ):
-            if event.is_final_response() and event.content and event.content.parts:
-                answer = "".join(part.text or "" for part in event.content.parts)
+        try:
+            async for event in runner.run_async(
+                user_id=user_id,
+                session_id=session_id,
+                new_message=types.Content(role="user", parts=[types.Part(text=prompt)]),
+            ):
+                if event.is_final_response() and event.content and event.content.parts:
+                    answer = "".join(part.text or "" for part in event.content.parts)
+        except Exception as error:  # Vertex errors are retryable deployment configuration errors.
+            raise RuntimeError(f"Gemini is temporarily unavailable: {error}") from error
         if not answer:
             raise RuntimeError("Gemini returned no final response.")
         fields = {"Definition": "", "Why it matters": "", "Next action": "", "Clarification": None}

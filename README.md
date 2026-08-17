@@ -27,11 +27,11 @@ gcloud run deploy team-unjargon-agent \
   --source . \
   --region us-central1 \
   --allow-unauthenticated \
-  --set-env-vars USE_FIRESTORE=true,TEAM_UNJARGON_DEMO_MODE=false,GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID,GEMINI_MODEL=gemini-3.5-flash
+  --set-env-vars USE_FIRESTORE=true,TEAM_UNJARGON_DEMO_MODE=false,GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID,GEMINI_MODEL=gemini-2.5-flash
 ```
 
 3. Grant the Cloud Run runtime service account the least-privilege Firestore access and the Vertex AI User role. Then seed one term through the UI and show the two-member retrieval flow.
 
-The live path uses Google ADK (`LlmAgent`, `Runner`, and `InMemorySessionService`) to call Gemini. The only persistent records are team terms and explicit feedback.
+The live path uses Google ADK (`LlmAgent`, `Runner`, and `InMemorySessionService`) to call Gemini. The only persistent records are team terms and explicit feedback. Set `GEMINI_MODEL` to the Gemini 3.5 model when that model is enabled for the project; the deployed compatibility baseline is Gemini 2.5 Flash.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) and [PRE_EXISTING_WORK.md](PRE_EXISTING_WORK.md).
