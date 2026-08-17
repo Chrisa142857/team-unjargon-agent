@@ -146,7 +146,6 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="Team unjargon agent", lifespan=lifespan)
-app.mount("/mcp", mcp.streamable_http_app(streamable_http_path="/", json_response=True, stateless_http=True, transport_security=mcp_security))
 
 
 @app.get("/")
@@ -215,3 +214,7 @@ def feedback(request: FeedbackRequest):
             raise HTTPException(404, "Save a correction before marking this new term useful.")
         return {"status": "counted", "record": vars(record)}
     return {"status": "noted"}
+
+
+# Mount last so the MCP endpoint is exactly /mcp (without a redirect to /mcp/).
+app.mount("", mcp.streamable_http_app(streamable_http_path="/mcp", json_response=True, stateless_http=True, transport_security=mcp_security))
