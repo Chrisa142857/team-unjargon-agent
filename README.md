@@ -21,16 +21,6 @@ python -m unittest discover -s tests -v
 
 The deployed health endpoint is `/api/healthz`.
 
-## MCP API
-
-The same shared glossary is available to MCP clients over Streamable HTTP at:
-
-```
-https://team-unjargon-agent-gwygowb26q-uc.a.run.app/mcp
-```
-
-It exposes four tools: `lookup_team_term`, `list_learning_inbox`, `submit_detected_terms`, and `save_team_definition`. The tool schemas deliberately accept terms and short team definitions only; there is no tool parameter for a transcript, prompt, path, or session ID.
-
 ## Automatic local bridge
 
 The new bridge is independent from the original unjargon.app collector. It reads Claude Code and Codex assistant output locally, extracts conservative jargon candidates, and uploads only `{source, candidates}` — never message text, paths, session IDs, or user prompts.
