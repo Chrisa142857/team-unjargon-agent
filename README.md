@@ -2,6 +2,8 @@
 
 A Gemini Collaborative Partner for AI-native teams. It turns one confusing term into a concise explanation, learns from explicit team corrections, and never collects an agent transcript.
 
+**Live demo:** https://team-unjargon-agent-170101312348.us-central1.run.app
+
 ## Local demo
 
 ```bash
