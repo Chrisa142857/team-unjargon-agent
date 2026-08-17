@@ -17,6 +17,8 @@ Open `http://127.0.0.1:8000`. Ask about `ADR`, save a correction as Member A, sw
 python -m unittest discover -s tests -v
 ```
 
+The deployed health endpoint is `/api/healthz`.
+
 ## Google Cloud production mode
 
 1. Create a Google Cloud project, enable Cloud Run, Firestore, Vertex AI, and Artifact Registry APIs, and create a Firestore Native database.

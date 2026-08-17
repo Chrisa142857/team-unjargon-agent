@@ -72,9 +72,14 @@ def styles():
     return FileResponse(static_dir / "styles.css", media_type="text/css")
 
 
-@app.get("/healthz")
-def healthz():
+def health_payload():
     return {"ok": True, "memory": "firestore" if isinstance(memory, FirestoreTeamMemory) else "in-memory"}
+
+
+@app.get("/healthz")
+@app.get("/api/healthz")
+def healthz():
+    return health_payload()
 
 
 @app.post("/api/explain")
