@@ -21,6 +21,16 @@ python -m unittest discover -s tests -v
 
 The deployed health endpoint is `/api/healthz`.
 
+## Automatic local bridge
+
+The new bridge is independent from the original unjargon.app collector. It reads Claude Code and Codex assistant output locally, extracts conservative jargon candidates, and uploads only `{source, candidates}` — never message text, paths, session IDs, or user prompts.
+
+```bash
+python3 team_unjargon_bridge.py --server https://team-unjargon-agent-gwygowb26q-uc.a.run.app --watch
+```
+
+It records local byte offsets in `~/.local/state/team-unjargon-bridge/offsets.json`, so later runs send only new assistant output. Its first scan starts at the current end of existing history, preventing an accidental archive upload, and each scan caps itself at 20 candidate events before resuming next time. It is intentionally a candidate detector rather than an explainer; Team unjargon performs the shared-memory triage and review workflow.
+
 ## Google Cloud production mode
 
 1. Create a Google Cloud project, enable Cloud Run, Firestore, Vertex AI, and Artifact Registry APIs, and create a Firestore Native database.
