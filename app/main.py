@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import os
 import re
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
+from mcp.server import MCPServer
+from mcp.server.transport_security import TransportSecuritySettings
 from pydantic import BaseModel, ConfigDict
 
 from .agent import TeamUnjargonPartner
@@ -66,6 +69,86 @@ def clean(value: str, name: str, limit: int) -> str:
     return result
 
 
+def observe_candidate_terms(source: str, candidates: list[str]) -> dict:
+    source = clean(source, "Source", 40)
+    accepted = []
+    for candidate in candidates[:12]:
+        term = candidate.strip()
+        if re.fullmatch(r"[A-Za-z][A-Za-z0-9 -]{0,78}", term) and term not in accepted:
+            accepted.append(term)
+    if not accepted:
+        raise HTTPException(422, "At least one detected term is required.")
+    tasks = memory.observe_terms(TEAM_ID, accepted, source)
+    return {
+        "received": len(accepted),
+        "aligned": sum(task.status == "aligned" for task in tasks),
+        "needs_review": sum(task.status == "needs_review" for task in tasks),
+        "tasks": [vars(task) for task in tasks],
+    }
+
+
+def create_mcp() -> MCPServer:
+    mcp = MCPServer(
+        "Team unjargon agent",
+        instructions="Use these tools to retrieve or update the team glossary. Submit only jargon candidates, never raw agent messages, prompts, paths, or session IDs.",
+    )
+
+    @mcp.tool()
+    def lookup_team_term(term: str) -> dict:
+        """Look up the team-approved meaning of one term without sending conversation context."""
+        term = clean(term, "Term", 80)
+        record = memory.get_term(TEAM_ID, term)
+        if not record:
+            return {"found": False, "term": term}
+        return {"found": True, "term": record.term, "definition": record.definition, "helpful_count": record.helpful_count}
+
+    @mcp.tool()
+    def list_learning_inbox() -> list[dict]:
+        """List glossary terms awaiting review or already aligned for the team."""
+        result = []
+        for task in memory.list_tasks(TEAM_ID):
+            record = memory.get_term(TEAM_ID, task.term)
+            result.append({**vars(task), "team_definition": record.definition if record else None})
+        return result
+
+    @mcp.tool()
+    def submit_detected_terms(source: str, candidates: list[str]) -> dict:
+        """Submit up to 12 detected jargon candidates. Never submit source text or transcript context."""
+        return observe_candidate_terms(source, candidates)
+
+    @mcp.tool()
+    def save_team_definition(member: str, term: str, definition: str) -> dict:
+        """Save a team-approved, concise definition after a teammate has reviewed a term."""
+        member = clean(member, "Member", 40)
+        term = clean(term, "Term", 80)
+        record = memory.save_correction(TEAM_ID, term, clean(definition, "Definition", 400), member)
+        return {"status": "saved", "term": record.term, "definition": record.definition}
+
+    return mcp
+
+
+mcp = create_mcp()
+default_mcp_hosts = [
+    "team-unjargon-agent-gwygowb26q-uc.a.run.app",
+    "team-unjargon-agent-170101312348.us-central1.run.app",
+    "localhost:*",
+    "127.0.0.1:*",
+    "testserver",
+]
+mcp_hosts = os.getenv("MCP_ALLOWED_HOSTS", ",".join(default_mcp_hosts)).split(",")
+mcp_security = TransportSecuritySettings(allowed_hosts=[host.strip() for host in mcp_hosts if host.strip()])
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    async with mcp.session_manager.run():
+        yield
+
+
+app = FastAPI(title="Team unjargon agent", lifespan=lifespan)
+app.mount("/mcp", mcp.streamable_http_app(streamable_http_path="/", json_response=True, stateless_http=True, transport_security=mcp_security))
+
+
 @app.get("/")
 def index():
     return FileResponse(static_dir / "index.html")
@@ -114,22 +197,8 @@ def inbox():
 
 @app.post("/api/detection-events")
 def detection_events(request: DetectionEventRequest):
-    source = clean(request.source, "Source", 40)
-    candidates = []
-    for candidate in request.candidates[:12]:
-        term = candidate.strip()
-        if re.fullmatch(r"[A-Za-z][A-Za-z0-9 -]{0,78}", term) and term not in candidates:
-            candidates.append(term)
-    if not candidates:
-        raise HTTPException(422, "At least one detected term is required.")
     # The event carries candidates only. Raw agent output is never accepted or persisted here.
-    tasks = memory.observe_terms(TEAM_ID, candidates, source)
-    return {
-        "received": len(candidates),
-        "aligned": sum(task.status == "aligned" for task in tasks),
-        "needs_review": sum(task.status == "needs_review" for task in tasks),
-        "tasks": [vars(task) for task in tasks],
-    }
+    return observe_candidate_terms(request.source, request.candidates)
 
 
 @app.post("/api/feedback")
