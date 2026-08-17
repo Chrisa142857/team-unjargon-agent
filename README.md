@@ -36,4 +36,4 @@ gcloud run deploy team-unjargon-agent \
 
 The live path uses Google ADK (`LlmAgent`, `Runner`, and `InMemorySessionService`) to call Gemini. The only persistent records are team terms and explicit feedback. Set `GEMINI_MODEL` to the Gemini 3.5 model when that model is enabled for the project; the deployed compatibility baseline is Gemini 2.5 Flash.
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) and [PRE_EXISTING_WORK.md](PRE_EXISTING_WORK.md).
+See [ARCHITECTURE.md](ARCHITECTURE.md), [PRE_EXISTING_WORK.md](PRE_EXISTING_WORK.md), and [DEMO.md](DEMO.md).
