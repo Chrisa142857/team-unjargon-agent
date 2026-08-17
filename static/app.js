@@ -37,7 +37,7 @@ $("simulate").onclick = async () => {
 $("draft").onclick = async () => {
   $("error").textContent = "";
   try {
-    const answer = await request("/api/explain", {member: $("member").value, term: currentTask.term, context:"A term automatically detected in team agent output."});
+    const answer = await request("/api/explain", {member: $("member").value, term: currentTask.term});
     $("source").textContent = `Draft source: ${answer.source}`; $("definition").textContent = answer.definition; $("why").textContent = answer.why_it_matters; $("next").textContent = answer.next_action; $("clarification").textContent = answer.clarification ? `Clarification: ${answer.clarification}` : "";
     $("correction").value = answer.definition; $("result").classList.remove("hidden");
   } catch (error) { $("error").textContent = error.message; }

@@ -23,11 +23,11 @@ class TeamUnjargonPartner:
         self.demo_mode = os.getenv("TEAM_UNJARGON_DEMO_MODE", "true").lower() == "true"
         self.model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
-    async def explain(self, team_id: str, member: str, term: str, context: str) -> Explanation:
+    async def explain(self, team_id: str, member: str, term: str) -> Explanation:
         record = self.memory.get_term(team_id, term)
         if self.demo_mode:
             return self._demo_explanation(term, record)
-        return await self._adk_explanation(term, context, record)
+        return await self._adk_explanation(term, record)
 
     def _demo_explanation(self, term: str, record: TermRecord | None) -> Explanation:
         if record:
@@ -45,7 +45,7 @@ class TeamUnjargonPartner:
             clarification=f"Which project or workflow is {term} referring to?",
         )
 
-    async def _adk_explanation(self, term: str, context: str, record: TermRecord | None) -> Explanation:
+    async def _adk_explanation(self, term: str, record: TermRecord | None) -> Explanation:
         """Run the same prompt through Google ADK when deployed with Vertex/Gemini credentials."""
         try:
             from google.adk.agents import LlmAgent
@@ -71,7 +71,7 @@ class TeamUnjargonPartner:
         runner = Runner(agent=agent, app_name="team_unjargon", session_service=sessions)
         user_id, session_id = "web-member", str(uuid.uuid4())
         await sessions.create_session(app_name="team_unjargon", user_id=user_id, session_id=session_id)
-        prompt = f"Term: {term}\nOptional member context: {context or '(none)'}"
+        prompt = f"Term: {term}\nThis was automatically detected in an authorized team-agent source."
         answer = ""
         try:
             async for event in runner.run_async(

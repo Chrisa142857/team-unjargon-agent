@@ -5,7 +5,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from .agent import TeamUnjargonPartner
 from .memory import FirestoreTeamMemory, InMemoryTeamMemory
@@ -37,12 +37,13 @@ app = FastAPI(title="Team unjargon agent")
 
 
 class ExplainRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     member: str
     term: str
-    context: str = ""
 
 
 class FeedbackRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     member: str
     term: str
     useful: bool | None = None
@@ -50,6 +51,7 @@ class FeedbackRequest(BaseModel):
 
 
 class DetectionEventRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     source: str
     candidates: list[str]
 
@@ -92,11 +94,8 @@ def healthz():
 async def explain(request: ExplainRequest):
     term = clean(request.term, "Term", 80)
     member = clean(request.member, "Member", 40)
-    context = request.context.strip()
-    if len(context) > 500:
-        raise HTTPException(422, "Optional context must be 500 characters or fewer.")
     try:
-        return vars(await partner.explain(TEAM_ID, member, term, context))
+        return vars(await partner.explain(TEAM_ID, member, term))
     except RuntimeError as error:
         raise HTTPException(503, str(error)) from error
 
