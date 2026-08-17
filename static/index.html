@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Team unjargon agent</title><link rel="stylesheet" href="/styles.css"></head>
+  <body>
+    <main>
+      <p class="eyebrow">Gemini Collaborative Partner</p>
+      <h1>Team unjargon agent</h1>
+      <p class="lede">Turn confusing agent vocabulary into team-approved learning — without sharing a teammate’s transcript.</p>
+      <aside><strong>Private by default.</strong> This demo sends a term and optional short context for the current answer. Team memory stores only explicit corrections and useful feedback, never a raw conversation.</aside>
+      <section class="card">
+        <label>Demo member <select id="member"><option>Member A</option><option>Member B</option></select></label>
+        <label>Confusing term <input id="term" maxlength="80" value="ADR" placeholder="e.g. ADR"></label>
+        <label>Optional context — not stored <textarea id="context" maxlength="500" placeholder="One sentence is enough."></textarea></label>
+        <button id="explain">Explain for my team</button>
+        <p id="error" role="alert"></p>
+      </section>
+      <section id="result" class="card hidden" aria-live="polite">
+        <p class="source" id="source"></p><h2 id="definition"></h2><p id="why"></p><p><strong>Next learning action:</strong> <span id="next"></span></p><p id="clarification"></p>
+        <div class="feedback"><button id="useful">Useful ✓</button><button id="show-correction">Improve team explanation</button></div>
+        <div id="correction-box" class="hidden"><label>Team-approved wording <textarea id="correction" maxlength="400"></textarea></label><button id="save-correction">Save for both members</button></div>
+        <p id="feedback-status"></p>
+      </section>
+      <footer>Demo loop: Member A saves a correction; switch to Member B and ask the same term to retrieve shared team memory.</footer>
+    </main><script src="/app.js"></script>
+  </body>
+</html>
