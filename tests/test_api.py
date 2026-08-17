@@ -55,6 +55,22 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(rag["status"], "needs_review")
         self.assertNotIn("context", rag)
 
+    def test_glossary_markdown_exports_and_imports_definitions_only(self):
+        exported = self.client.get("/api/glossary.md")
+        self.assertEqual(exported.status_code, 200)
+        self.assertIn("## ADR", exported.text)
+        shared = self.client.post(
+            "/api/glossary-import",
+            json={
+                "member": "Member B",
+                "markdown": "# unjargon glossary\n\n## RAG\n\nRetrieval-Augmented Generation combines retrieved knowledge with a model response.\n\nprivate transcript text is ignored\n",
+            },
+        )
+        self.assertEqual(shared.status_code, 200)
+        self.assertEqual(shared.json()["imported"], 1)
+        answer = self.client.post("/api/explain", json={"member": "Member A", "term": "RAG"})
+        self.assertEqual(answer.json()["definition"], "Retrieval-Augmented Generation combines retrieved knowledge with a model response.")
+
 
 if __name__ == "__main__":
     unittest.main()

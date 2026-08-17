@@ -35,6 +35,7 @@ class LearningTask:
 
 class TeamMemory(Protocol):
     def get_term(self, team_id: str, term: str) -> TermRecord | None: ...
+    def list_terms(self, team_id: str) -> list[TermRecord]: ...
     def save_correction(self, team_id: str, term: str, definition: str, member: str) -> TermRecord: ...
     def mark_useful(self, team_id: str, term: str, member: str) -> TermRecord | None: ...
     def observe_terms(self, team_id: str, terms: list[str], source: str) -> list[LearningTask]: ...
@@ -56,11 +57,14 @@ class InMemoryTeamMemory:
         record = self._terms.get((team_id, normalize(term)))
         return replace(record) if record else None
 
+    def list_terms(self, team_id: str) -> list[TermRecord]:
+        return sorted((replace(record) for (team, _), record in self._terms.items() if team == team_id), key=lambda record: record.term.lower())
+
     def save_correction(self, team_id: str, term: str, definition: str, member: str) -> TermRecord:
         existing = self.get_term(team_id, term)
         record = TermRecord(term.strip(), definition.strip(), existing.team_context if existing else "Team-approved learning", existing.helpful_count if existing else 0, now())
         self._terms[(team_id, normalize(term))] = record
-        self._tasks[(team_id, normalize(term))] = LearningTask(record.term, "aligned", self._tasks.get((team_id, normalize(term)), LearningTask(record.term, "aligned", 0, "team", "", now())).sightings, "team", "Team definition approved.", now())
+        self._tasks[(team_id, normalize(term))] = LearningTask(record.term, "aligned", self._tasks.get((team_id, normalize(term)), LearningTask(record.term, "aligned", 0, "team", "", now())).sightings, "team", "A teammate shared this explanation.", now())
         return replace(record)
 
     def mark_useful(self, team_id: str, term: str, member: str) -> TermRecord | None:
@@ -82,7 +86,7 @@ class InMemoryTeamMemory:
                 status="aligned" if known else "needs_review",
                 sightings=(old.sightings if old else 0) + 1,
                 source=source,
-                reason="Team definition is ready." if known else "Repeated in agent output; no team-approved meaning yet.",
+                reason="A teammate has already shared a concise explanation." if known else "New jargon detected; no shared explanation yet.",
                 updated_at=now(),
             )
             self._tasks[key] = task
@@ -115,13 +119,16 @@ class FirestoreTeamMemory:
         snapshot = self._terms(team_id).document(normalize(term)).get()
         return TermRecord(**snapshot.to_dict()) if snapshot.exists else None
 
+    def list_terms(self, team_id: str) -> list[TermRecord]:
+        return sorted((TermRecord(**doc.to_dict()) for doc in self._terms(team_id).stream()), key=lambda record: record.term.lower())
+
     def save_correction(self, team_id: str, term: str, definition: str, member: str) -> TermRecord:
         existing = self.get_term(team_id, term)
         record = TermRecord(term.strip(), definition.strip(), existing.team_context if existing else "Team-approved learning", existing.helpful_count if existing else 0, now())
         self._terms(team_id).document(normalize(term)).set(asdict(record))
         old = self._tasks(team_id).document(normalize(term)).get()
         sightings = old.to_dict().get("sightings", 0) if old.exists else 0
-        task = LearningTask(record.term, "aligned", sightings, "team", "Team definition approved.", now())
+        task = LearningTask(record.term, "aligned", sightings, "team", "A teammate shared this explanation.", now())
         self._tasks(team_id).document(normalize(term)).set(asdict(task))
         self.client.collection("teams").document(team_id).collection("feedback").add({"member": member, "term": record.term, "correction": record.definition, "created_at": now()})
         return record
@@ -142,7 +149,7 @@ class FirestoreTeamMemory:
             old = ref.get()
             old_data = old.to_dict() if old.exists else {}
             known = self.get_term(team_id, term)
-            task = LearningTask(term, "aligned" if known else "needs_review", int(old_data.get("sightings", 0)) + 1, source, "Team definition is ready." if known else "Repeated in agent output; no team-approved meaning yet.", now())
+            task = LearningTask(term, "aligned" if known else "needs_review", int(old_data.get("sightings", 0)) + 1, source, "A teammate has already shared a concise explanation." if known else "New jargon detected; no shared explanation yet.", now())
             ref.set(asdict(task))
             tasks.append(task)
         return tasks

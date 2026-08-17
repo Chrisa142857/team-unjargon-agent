@@ -12,7 +12,7 @@ function card(task) {
   const reference = task.team_definition
     ? `<details class="explanation"><summary>Team definition</summary><p class="definition">${escape(task.team_definition)}</p></details>`
     : `<details class="explanation"><summary>Public reference · zero AI</summary><p class="reference" data-reference="${term}">Loading public reference…</p><p class="links"><a href="https://www.google.com/search?q=${encodeURIComponent(task.term)}" target="_blank" rel="noreferrer">Search Google ↗</a> <a href="https://en.wikipedia.org/wiki/${encodeURIComponent(task.term)}" target="_blank" rel="noreferrer">Open Wikipedia ↗</a></p></details>`;
-  return `<article class="task ${review ? "review-task" : "aligned-task"}"><p class="eyebrow">${review ? "Needs team review" : "Automatically aligned"}</p><h3>${term}</h3>${reference}<p>${escape(task.reason)}</p><small>${task.sightings} sighting${task.sightings === 1 ? "" : "s"} · ${escape(task.source)}</small>${review ? `<button data-term="${term}" class="review-button">Review this term</button>` : ""}</article>`;
+  return `<article class="task ${review ? "review-task" : "aligned-task"}"><p class="eyebrow">${review ? "New jargon to learn" : "Shared with team"}</p><h3>${term}</h3>${reference}<p>${escape(task.reason)}</p><small>${task.sightings} sighting${task.sightings === 1 ? "" : "s"} · ${escape(task.source)}</small>${review ? `<button data-term="${term}" class="review-button">Explain and share</button>` : ""}</article>`;
 }
 function escape(value) { return value.replace(/[&<>'"]/g, (character) => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;","\"":"&quot;"})[character]); }
 async function loadPublicReferences() {
@@ -29,8 +29,8 @@ async function loadInbox() {
   const {tasks} = await request("/api/inbox");
   const review = tasks.filter((task) => task.status === "needs_review");
   const aligned = tasks.length - review.length;
-  $("counts").textContent = `${review.length} need review · ${aligned} aligned automatically`;
-  $("inbox").innerHTML = tasks.length ? tasks.map(card).join("") : `<p class="empty">Waiting for a connected detector. The agent will build this inbox automatically.</p>`;
+  $("counts").textContent = `${review.length} new to learn · ${aligned} shared`;
+  $("inbox").innerHTML = tasks.length ? tasks.map(card).join("") : `<p class="empty">Waiting for a connected detector or a teammate’s glossary.</p>`;
   document.querySelectorAll(".review-button").forEach((button) => button.onclick = () => openReview(tasks.find((task) => task.term === button.dataset.term)));
   loadPublicReferences();
 }
@@ -46,7 +46,7 @@ $("simulate").onclick = async () => {
   $("run-status").textContent = "Processing detector events…";
   try {
     const run = await request("/api/detection-events", {source:"Codex", candidates:["ADR", "RAG", "SLO", "runbook", "vector database", "RAG"]});
-    $("run-status").textContent = `${run.received} candidates received · ${run.aligned} aligned · ${run.needs_review} added for team review.`;
+    $("run-status").textContent = `${run.received} candidates received · ${run.aligned} already shared · ${run.needs_review} new terms to learn.`;
     await loadInbox();
   } catch (error) { $("run-status").textContent = error.message; }
 };
@@ -61,8 +61,17 @@ $("draft").onclick = async () => {
 $("save-correction").onclick = async () => {
   try {
     await request("/api/feedback", {member: $("member").value, term: currentTask.term, correction: $("correction").value});
-    $("feedback-status").textContent = "Approved. Future detections will align automatically.";
+    $("feedback-status").textContent = "Shared. Future detections will show this explanation automatically.";
     await loadInbox();
   } catch (error) { $("feedback-status").textContent = error.message; }
+};
+$("import").onclick = async () => {
+  $("import-status").textContent = "Importing only term headings and concise definitions…";
+  try {
+    const result = await request("/api/glossary-import", {member: $("import-member").value, markdown: $("import-markdown").value});
+    $("import-status").textContent = `${result.imported} term${result.imported === 1 ? "" : "s"} added to the shared glossary.`;
+    $("import-markdown").value = "";
+    await loadInbox();
+  } catch (error) { $("import-status").textContent = error.message; }
 };
 loadInbox();

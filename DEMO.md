@@ -2,15 +2,15 @@
 
 ## 0:00–0:20 — problem and privacy
 
-Open the Cloud Run URL. Explain that agent vocabulary travels faster than a team’s shared understanding. Point to the privacy statement: the connector emits candidate terms and a source category, not agent transcripts.
+Open the Cloud Run URL. Explain that people meet unknown jargon while working with AI agents, then choose what they have learned to share with a team. Point to the privacy statement: the connector emits candidate terms and a source category, not agent transcripts.
 
 ## 0:20–1:10 — autonomous learning run
 
-Click **Run demo incoming feed**. Show that the agent receives a batch of candidate terms, automatically aligns a known term, deduplicates repeats, and creates review work only for unknown terms. This is the event-driven work the agent completes before asking a person for help.
+Click **Run demo incoming feed**. Show that the agent receives a batch of candidate terms, deduplicates repeats, finds a previously shared explanation, and leaves only unknown terms to learn. This is the event-driven work the agent completes before asking a person for help.
 
 ## 1:10–2:05 — shared learning loop
 
-Open one review task. Ask Gemini to draft a concise explanation, improve it as Member A, and approve it. Run the incoming feed again: the term now moves to **Automatically aligned**. Explain that all future team members inherit this decision without seeing the originating output.
+Open one new-jargon task. Ask Gemini to draft a concise explanation, improve it as Member A, and add it to the team glossary. Download the Markdown glossary, then paste it into **Import a teammate’s shared Markdown** as Member B. Explain that future detections show the chosen explanation without exposing the originating output.
 
 ## 1:55–2:30 — Google Cloud proof
 

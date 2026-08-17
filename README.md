@@ -1,6 +1,6 @@
 # Team unjargon agent
 
-A Gemini Collaborative Partner that automatically maintains an AI-native team's shared vocabulary. It receives detected term candidates from a privacy-preserving connector, aligns known terms, and asks the team to review only unresolved meanings.
+A Gemini Collaborative Partner that turns jargon people learn with their own AI agents into an opt-in shared team glossary. It receives privacy-preserving candidate terms, finds what teammates have chosen to share, and leaves only genuinely new jargon to learn.
 
 **Live demo:** https://team-unjargon-agent-gwygowb26q-uc.a.run.app
 
@@ -20,6 +20,10 @@ python -m unittest discover -s tests -v
 ```
 
 The deployed health endpoint is `/api/healthz`.
+
+## Share a personal glossary
+
+`GET /api/glossary.md` downloads the shared terms as ordinary Markdown. A teammate can paste that file into `POST /api/glossary-import` (or use the web UI), which reads only `## term` headings and the first definition line. The original Markdown is discarded: no transcript, path, or session history is stored.
 
 ## Automatic local bridge
 

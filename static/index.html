@@ -1,32 +1,43 @@
 <!doctype html>
 <html lang="en">
-  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Team unjargon agent</title><link rel="stylesheet" href="/styles.css?v=collapsible-1"></head>
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Team unjargon agent</title><link rel="stylesheet" href="/styles.css?v=share-1"></head>
   <body>
     <main>
       <p class="eyebrow">Event-driven Gemini Collaborative Partner</p>
       <h1>Team unjargon agent</h1>
-      <p class="lede">Your team’s AI vocabulary stays aligned without asking people to submit terms one by one.</p>
-      <aside><strong>Private by design.</strong> Connected detectors send only high-confidence term candidates and a source category. This service never receives or stores an agent transcript.</aside>
+      <p class="lede">Turn the jargon you learned with your AI agents into a glossary your team can choose to share.</p>
+      <aside><strong>Private by design.</strong> Local detectors send only high-confidence term candidates. Markdown sharing keeps only a term and its first concise definition — never an agent transcript, path, or session history.</aside>
 
       <section class="card hero-card">
-        <div><p class="eyebrow">Autonomous learning run</p><h2>Incoming agent vocabulary</h2><p>Detectors emit candidates in the background. The agent deduplicates them, matches known team terms, and creates review work only where the team is not aligned.</p></div>
+        <div><p class="eyebrow">Autonomous learning run</p><h2>New jargon from your AI agents</h2><p>Detectors emit candidates in the background. The agent deduplicates them, finds shared explanations, and leaves only genuinely new jargon for you to learn.</p></div>
         <button id="simulate">Run demo incoming feed</button>
         <p id="run-status" aria-live="polite"></p>
       </section>
 
-      <section class="inbox-head"><div><p class="eyebrow">Team learning inbox</p><h2>Only the terms that need your judgment</h2></div><div id="counts" class="counts"></div></section>
+      <section class="card share-card">
+        <p class="eyebrow">Personal → team</p><h2>Share what you learned</h2>
+        <p>Download a small Markdown glossary, then share it where your team already works. Importing that file keeps only each <code>## term</code> and its first definition line.</p>
+        <a class="download" href="/api/glossary.md" download="unjargon-glossary.md">Download glossary Markdown ↓</a>
+        <details class="import"><summary>Import a teammate’s shared Markdown</summary>
+          <label>Contributor <select id="import-member"><option>Member A</option><option>Member B</option></select></label>
+          <label>Glossary Markdown <textarea id="import-markdown" maxlength="20000" placeholder="# unjargon glossary&#10;&#10;## RAG&#10;&#10;Retrieval-Augmented Generation combines retrieved knowledge with a model response."></textarea></label>
+          <button id="import">Add shared terms</button><p id="import-status"></p>
+        </details>
+      </section>
+
+      <section class="inbox-head"><div><p class="eyebrow">Team learning inbox</p><h2>New jargon and what teammates chose to share</h2></div><div id="counts" class="counts"></div></section>
       <section id="inbox" class="inbox" aria-live="polite"></section>
 
       <section id="review" class="card hidden" aria-live="polite">
-        <p class="eyebrow">Review task</p><h2 id="review-term"></h2><p id="review-reason"></p>
+        <p class="eyebrow">Learn then share</p><h2 id="review-term"></h2><p id="review-reason"></p>
         <label>Reviewer <select id="member"><option>Member A</option><option>Member B</option></select></label>
         <button id="draft">Draft an explanation with Gemini</button>
         <p id="error" role="alert"></p>
         <div id="result" class="hidden"><p class="source" id="source"></p><h3 id="definition"></h3><p id="why"></p><p><strong>Next action:</strong> <span id="next"></span></p><p id="clarification"></p>
-          <label>Approve or improve team wording <textarea id="correction" maxlength="400"></textarea></label><button id="save-correction">Approve for the team</button><p id="feedback-status"></p>
+          <label>Share a concise explanation <textarea id="correction" maxlength="400"></textarea></label><button id="save-correction">Add to the team glossary</button><p id="feedback-status"></p>
         </div>
       </section>
       <footer>Production connector contract: <code>POST /api/detection-events</code> with candidate terms only. A local detector can emit events automatically from Claude Code or Codex without sending the conversation.</footer>
-    </main><script src="/app.js?v=collapsible-1"></script>
+    </main><script src="/app.js?v=share-1"></script>
   </body>
 </html>

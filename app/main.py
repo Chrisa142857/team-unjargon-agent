@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, ConfigDict
 
 from .agent import TeamUnjargonPartner
@@ -57,6 +57,12 @@ class DetectionEventRequest(BaseModel):
     candidates: list[str]
 
 
+class GlossaryImportRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    member: str
+    markdown: str
+
+
 def clean(value: str, name: str, limit: int) -> str:
     result = value.strip()
     if not result:
@@ -64,6 +70,31 @@ def clean(value: str, name: str, limit: int) -> str:
     if len(result) > limit:
         raise HTTPException(422, f"{name} must be {limit} characters or fewer.")
     return result
+
+
+def glossary_entries() -> list[tuple[str, str]]:
+    return [(record.term, record.definition) for record in memory.list_terms(TEAM_ID)]
+
+
+def glossary_markdown() -> str:
+    lines = [
+        "# unjargon glossary",
+        "",
+        "> Terms and explanations deliberately shared for team learning. No agent transcript, path, or session history is included.",
+    ]
+    for term, definition in glossary_entries():
+        lines.extend(["", f"## {term}", "", definition])
+    return "\n".join(lines) + "\n"
+
+
+def parse_glossary(markdown: str) -> list[tuple[str, str]]:
+    entries = []
+    for match in re.finditer(r"^##[ \t]+(.+?)\s*$\n+(.+?)(?=^##[ \t]+|\Z)", markdown, re.MULTILINE | re.DOTALL):
+        term = match.group(1).strip()
+        definition = next((line.strip() for line in match.group(2).splitlines() if line.strip()), "")
+        if re.fullmatch(r"[A-Za-z][A-Za-z0-9 -]{0,78}", term) and 1 <= len(definition) <= 400:
+            entries.append((term, definition))
+    return list(dict(entries).items())[:30]
 
 
 @app.get("/")
@@ -110,6 +141,26 @@ def inbox():
         item["team_definition"] = record.definition if record else None
         tasks.append(item)
     return {"tasks": tasks}
+
+
+@app.get("/api/glossary.md")
+def export_glossary():
+    return Response(
+        glossary_markdown(),
+        media_type="text/markdown",
+        headers={"Content-Disposition": 'attachment; filename="unjargon-glossary.md"'},
+    )
+
+
+@app.post("/api/glossary-import")
+def import_glossary(request: GlossaryImportRequest):
+    member = clean(request.member, "Member", 40)
+    entries = parse_glossary(clean(request.markdown, "Markdown", 20_000))
+    if not entries:
+        raise HTTPException(422, "No valid ## term / definition entries found in this Markdown file.")
+    for term, definition in entries:
+        memory.save_correction(TEAM_ID, term, definition, member)
+    return {"imported": len(entries), "terms": [term for term, _ in entries]}
 
 
 @app.post("/api/detection-events")
