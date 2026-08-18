@@ -14,7 +14,7 @@ Open one new-jargon task. Ask Gemini to draft a concise explanation, improve it 
 
 ## 1:55–2:30 — Google Cloud proof
 
-Open `/api/healthz` to show the deployed Cloud Run service reports `memory: firestore`. In Google Cloud Console, show the Cloud Run service, the Firestore Native database, and the saved `teams/demo-team/terms` record. Its fields are a term, an explicit correction, helpful count, and timestamp — not a transcript.
+Open `/api/healthz` to show the deployed Cloud Run service reports `memory: firestore`. Trigger one concise term explanation and show its `Gemini + ADK` source, then show the Cloud Run service, the Firestore Native database, and the saved `teams/demo-team/terms` record. Its fields are a term, an explicit correction, helpful count, and timestamp — not a transcript.
 
 ## Closing
 

@@ -21,7 +21,7 @@ class TeamUnjargonPartner:
     def __init__(self, memory: TeamMemory) -> None:
         self.memory = memory
         self.demo_mode = os.getenv("TEAM_UNJARGON_DEMO_MODE", "true").lower() == "true"
-        self.model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+        self.model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 
     async def explain(self, team_id: str, member: str, term: str) -> Explanation:
         record = self.memory.get_term(team_id, term)
