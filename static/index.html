@@ -25,8 +25,11 @@
         </details>
       </section>
 
-      <section class="inbox-head"><div><p class="eyebrow">Team learning inbox</p><h2>New jargon and what teammates chose to share</h2></div><div id="counts" class="counts"></div></section>
-      <section id="inbox" class="inbox" aria-live="polite"></section>
+      <section class="inbox-head"><div><p class="eyebrow">Personal learning inbox</p><h2>New jargon to learn</h2></div><div id="new-count" class="counts"></div></section>
+      <section id="new-inbox" class="inbox" aria-live="polite"></section>
+
+      <section class="inbox-head"><div><p class="eyebrow">Team glossary</p><h2>What teammates chose to share</h2></div><div id="shared-count" class="counts"></div></section>
+      <section id="shared-inbox" class="inbox" aria-live="polite"></section>
 
       <section id="review" class="card hidden" aria-live="polite">
         <p class="eyebrow">Learn then share</p><h2 id="review-term"></h2><p id="review-reason"></p>
@@ -38,6 +41,6 @@
         </div>
       </section>
       <footer>Production connector contract: <code>POST /api/detection-events</code> with candidate terms only. A local detector can emit events automatically from Claude Code or Codex without sending the conversation.</footer>
-    </main><script src="/app.js?v=share-2"></script>
+    </main><script src="/app.js?v=split-1"></script>
   </body>
 </html>

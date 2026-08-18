@@ -29,9 +29,11 @@ async function loadPublicReferences() {
 async function loadInbox() {
   const {tasks} = await request("/api/inbox");
   const review = tasks.filter((task) => task.status === "needs_review");
-  const aligned = tasks.length - review.length;
-  $("counts").textContent = `${review.length} new to learn · ${aligned} shared`;
-  $("inbox").innerHTML = tasks.length ? tasks.map(card).join("") : `<p class="empty">Waiting for a connected detector or a teammate’s glossary.</p>`;
+  const shared = tasks.filter((task) => task.status === "aligned");
+  $("new-count").textContent = `${review.length} new`;
+  $("shared-count").textContent = `${shared.length} shared`;
+  $("new-inbox").innerHTML = review.length ? review.map(card).join("") : `<p class="empty">No new jargon right now.</p>`;
+  $("shared-inbox").innerHTML = shared.length ? shared.map(card).join("") : `<p class="empty">No teammate has shared a glossary term yet.</p>`;
   document.querySelectorAll(".review-button").forEach((button) => button.onclick = () => openReview(tasks.find((task) => task.term === button.dataset.term)));
   loadPublicReferences();
 }
