@@ -1,5 +1,7 @@
 # Architecture
 
+![Team unjargon agent architecture](assets/team-unjargon-architecture.png)
+
 ```text
 Local detector / connector
   | high-confidence candidate terms + source category only
