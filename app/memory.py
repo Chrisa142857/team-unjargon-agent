@@ -33,6 +33,18 @@ class LearningTask:
     updated_at: str
 
 
+@dataclass(frozen=True)
+class AgentRun:
+    """A privacy-safe audit entry: term-level routing decisions, never agent output."""
+
+    source: str
+    received: int
+    aligned: int
+    needs_review: int
+    decisions: list[dict[str, str]]
+    updated_at: str
+
+
 class TeamMemory(Protocol):
     def get_term(self, team_id: str, term: str) -> TermRecord | None: ...
     def list_terms(self, team_id: str) -> list[TermRecord]: ...
@@ -40,6 +52,8 @@ class TeamMemory(Protocol):
     def mark_useful(self, team_id: str, term: str, member: str) -> TermRecord | None: ...
     def observe_terms(self, team_id: str, terms: list[str], source: str) -> list[LearningTask]: ...
     def list_tasks(self, team_id: str) -> list[LearningTask]: ...
+    def record_run(self, team_id: str, source: str, tasks: list[LearningTask]) -> AgentRun: ...
+    def latest_run(self, team_id: str) -> AgentRun | None: ...
 
 
 class InMemoryTeamMemory:
@@ -48,6 +62,7 @@ class InMemoryTeamMemory:
     def __init__(self) -> None:
         self._terms: dict[tuple[str, str], TermRecord] = {}
         self._tasks: dict[tuple[str, str], LearningTask] = {}
+        self._runs: dict[str, AgentRun] = {}
 
     def seed(self, team_id: str, term: str, definition: str, team_context: str) -> None:
         key = (team_id, normalize(term))
@@ -95,6 +110,15 @@ class InMemoryTeamMemory:
 
     def list_tasks(self, team_id: str) -> list[LearningTask]:
         return sorted((replace(task) for (team, _), task in self._tasks.items() if team == team_id), key=lambda task: (task.status == "aligned", -task.sightings, task.term.lower()))
+
+    def record_run(self, team_id: str, source: str, tasks: list[LearningTask]) -> AgentRun:
+        run = _run_summary(source, tasks)
+        self._runs[team_id] = run
+        return run
+
+    def latest_run(self, team_id: str) -> AgentRun | None:
+        run = self._runs.get(team_id)
+        return replace(run) if run else None
 
 
 class FirestoreTeamMemory:
@@ -157,3 +181,25 @@ class FirestoreTeamMemory:
     def list_tasks(self, team_id: str) -> list[LearningTask]:
         tasks = [LearningTask(**doc.to_dict()) for doc in self._tasks(team_id).stream()]
         return sorted(tasks, key=lambda task: (task.status == "aligned", -task.sightings, task.term.lower()))
+
+    def record_run(self, team_id: str, source: str, tasks: list[LearningTask]) -> AgentRun:
+        run = _run_summary(source, tasks)
+        self.client.collection("teams").document(team_id).collection("runs").document("latest").set(asdict(run))
+        return run
+
+    def latest_run(self, team_id: str) -> AgentRun | None:
+        snapshot = self.client.collection("teams").document(team_id).collection("runs").document("latest").get()
+        return AgentRun(**snapshot.to_dict()) if snapshot.exists else None
+
+
+def _run_summary(source: str, tasks: list[LearningTask]) -> AgentRun:
+    aligned = sum(task.status == "aligned" for task in tasks)
+    decisions = [
+        {
+            "term": task.term,
+            "action": "Aligned" if task.status == "aligned" else "Queued",
+            "reason": "shared team explanation found" if task.status == "aligned" else "no shared team explanation",
+        }
+        for task in tasks
+    ]
+    return AgentRun(source, len(tasks), aligned, len(tasks) - aligned, decisions, now())

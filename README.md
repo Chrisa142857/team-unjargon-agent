@@ -33,7 +33,9 @@ The new bridge is independent from the original unjargon.app collector. It reads
 python3 team_unjargon_bridge.py --server https://team-unjargon-agent-gwygowb26q-uc.a.run.app --watch
 ```
 
-It records local byte offsets in `~/.local/state/team-unjargon-bridge/offsets.json`, so later runs send only new assistant output. Its first scan starts at the current end of existing history, preventing an accidental archive upload, and each scan caps itself at 20 candidate events before resuming next time. It is intentionally a candidate detector rather than an explainer; Team unjargon performs the shared-memory triage and review workflow.
+It records local byte offsets in `~/.local/state/team-unjargon-bridge/offsets.json`, so later runs send only new assistant output. Its first scan starts at the current end of existing history, preventing an accidental archive upload, and each scan caps the **entire scan** at 20 candidate events before resuming next time. It is intentionally a candidate detector rather than an explainer; Team unjargon performs the shared-memory triage and review workflow.
+
+Every detection event also writes one privacy-safe autonomous decision log: the source, candidate-term count, and whether each term was aligned with a voluntarily shared explanation or queued for review. It never records raw agent output.
 
 ## Google Cloud production mode
 

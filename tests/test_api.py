@@ -48,6 +48,12 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.json()["received"], 2)
         self.assertEqual(response.json()["aligned"], 1)
         self.assertEqual(response.json()["needs_review"], 1)
+        run = self.client.get("/api/agent-run").json()["run"]
+        self.assertEqual(run["aligned"], 1)
+        self.assertEqual(run["needs_review"], 1)
+        self.assertEqual(run["decisions"][0]["action"], "Aligned")
+        self.assertNotIn("transcript", str(run))
+        self.assertEqual(self.client.get("/api/agent-run").headers["cache-control"], "no-store")
         inbox = self.client.get("/api/inbox").json()["tasks"]
         adr = next(task for task in inbox if task["term"] == "ADR")
         self.assertIn("Architecture Decision Record", adr["team_definition"])

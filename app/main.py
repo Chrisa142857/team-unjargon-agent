@@ -4,7 +4,7 @@ import os
 import re
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, ConfigDict
 
@@ -35,6 +35,14 @@ def create_memory():
 memory = create_memory()
 partner = TeamUnjargonPartner(memory)
 app = FastAPI(title="Team unjargon agent")
+
+
+@app.middleware("http")
+async def disable_api_cache(request: Request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 class ExplainRequest(BaseModel):
@@ -143,6 +151,12 @@ def inbox():
     return {"tasks": tasks}
 
 
+@app.get("/api/agent-run")
+def agent_run():
+    run = memory.latest_run(TEAM_ID)
+    return {"run": vars(run) if run else None}
+
+
 @app.get("/api/glossary.md")
 def export_glossary():
     return Response(
@@ -175,10 +189,11 @@ def detection_events(request: DetectionEventRequest):
     if not candidates:
         raise HTTPException(422, "At least one detected term is required.")
     tasks = memory.observe_terms(TEAM_ID, candidates, source)
+    run = memory.record_run(TEAM_ID, source, tasks)
     return {
-        "received": len(candidates),
-        "aligned": sum(task.status == "aligned" for task in tasks),
-        "needs_review": sum(task.status == "needs_review" for task in tasks),
+        "received": run.received,
+        "aligned": run.aligned,
+        "needs_review": run.needs_review,
         "tasks": [vars(task) for task in tasks],
     }
 

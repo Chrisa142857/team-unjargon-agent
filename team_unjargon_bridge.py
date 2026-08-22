@@ -52,8 +52,10 @@ def post(server: str, source: str, terms: list[str]) -> None:
         response.read()
 
 
-def scan(root: Path, tool: str, offsets: dict[str, int], server: str) -> None:
+def scan(root: Path, tool: str, offsets: dict[str, int], server: str, remaining: int) -> int:
     for path in root.rglob("*.jsonl"):
+        if remaining <= 0:
+            break
         key = str(path)
         if key not in offsets:
             # ponytail: live-only by default; add an explicit capped backfill command if history import is needed.
@@ -63,7 +65,6 @@ def scan(root: Path, tool: str, offsets: dict[str, int], server: str) -> None:
         try:
             with path.open("rb") as handle:
                 handle.seek(start)
-                sent = 0
                 while line := handle.readline():
                     try:
                         terms = candidates(assistant_text(tool, json.loads(line)))
@@ -71,12 +72,13 @@ def scan(root: Path, tool: str, offsets: dict[str, int], server: str) -> None:
                         continue
                     if terms:
                         post(server, "Claude Code" if tool == "claude" else "Codex", terms)
-                        sent += 1
-                        if sent >= MAX_EVENTS_PER_SCAN:
+                        remaining -= 1
+                        if remaining <= 0:
                             break
                 offsets[key] = handle.tell()
         except OSError:
             continue
+    return remaining
 
 
 def main() -> None:
@@ -89,9 +91,10 @@ def main() -> None:
     args.state.parent.mkdir(parents=True, exist_ok=True)
     offsets = json.loads(args.state.read_text()) if args.state.exists() else {}
     while True:
+        remaining = MAX_EVENTS_PER_SCAN
         for root, tool in roots:
             if root.exists():
-                scan(root, tool, offsets, args.server)
+                remaining = scan(root, tool, offsets, args.server, remaining)
         args.state.write_text(json.dumps(offsets))
         if not args.watch:
             return

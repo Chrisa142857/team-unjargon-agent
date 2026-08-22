@@ -1,6 +1,9 @@
 import importlib.util
+import json
 import unittest
 from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location("bridge", Path(__file__).parents[1] / "team_unjargon_bridge.py")
 bridge = importlib.util.module_from_spec(spec)
@@ -17,3 +20,16 @@ class BridgeTests(unittest.TestCase):
     def test_claude_parser_only_reads_assistant_text(self):
         row = {"type": "assistant", "message": {"role": "assistant", "content": [{"type": "text", "text": "Use RAG."}]}}
         self.assertEqual(bridge.assistant_text("claude", row), "Use RAG.")
+
+    def test_scan_caps_events_across_files(self):
+        row = json.dumps({"type": "assistant", "message": {"role": "assistant", "content": [{"type": "text", "text": "Use RAG."}]}})
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            first, second = root / "first.jsonl", root / "second.jsonl"
+            first.write_text(row + "\n")
+            second.write_text(row + "\n")
+            offsets = {str(first): 0, str(second): 0}
+            with patch.object(bridge, "post") as post:
+                remaining = bridge.scan(root, "claude", offsets, "https://example.test", 1)
+            self.assertEqual(remaining, 0)
+            self.assertEqual(post.call_count, 1)

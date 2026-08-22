@@ -1,7 +1,7 @@
 const $ = (id) => document.getElementById(id);
 let currentTask;
 async function request(path, body) {
-  const response = await fetch(path, {method: body ? "POST" : "GET", headers: body ? {"Content-Type": "application/json"} : {}, body: body ? JSON.stringify(body) : undefined});
+  const response = await fetch(path, {method: body ? "POST" : "GET", cache: "no-store", headers: body ? {"Content-Type": "application/json"} : {}, body: body ? JSON.stringify(body) : undefined});
   const data = await response.json();
   if (!response.ok) throw new Error(data.detail || "Request failed.");
   return data;
@@ -37,6 +37,13 @@ async function loadInbox() {
   document.querySelectorAll(".review-button").forEach((button) => button.onclick = () => openReview(tasks.find((task) => task.term === button.dataset.term)));
   loadPublicReferences();
 }
+async function loadAgentRun() {
+  const {run} = await request("/api/agent-run");
+  if (!run) return;
+  const decisions = run.decisions.map((decision) => `<li><strong>${escape(decision.action)}</strong> ${escape(decision.term)} — ${escape(decision.reason)}</li>`).join("");
+  $("agent-run").innerHTML = `<p class="eyebrow">Autonomous decision log</p><h2>Last run: ${escape(run.source)}</h2><p>${run.received} candidate terms processed without a transcript · ${run.aligned} aligned automatically · ${run.needs_review} queued for a learner.</p><ul>${decisions}</ul><p class="privacy-note">Stored evidence is limited to the candidate term and routing decision.</p>`;
+  $("agent-run").classList.remove("hidden");
+}
 function openReview(task) {
   currentTask = task;
   $("review-term").textContent = task.term;
@@ -51,6 +58,7 @@ $("simulate").onclick = async () => {
     const run = await request("/api/detection-events", {source:"Codex", candidates:["ADR", "RAG", "SLO", "runbook", "vector database", "RAG"]});
     $("run-status").textContent = `${run.received} candidates received · ${run.aligned} already shared · ${run.needs_review} new terms to learn.`;
     await loadInbox();
+    await loadAgentRun();
   } catch (error) { $("run-status").textContent = error.message; }
 };
 $("draft").onclick = async () => {
@@ -77,4 +85,4 @@ $("import").onclick = async () => {
     await loadInbox();
   } catch (error) { $("import-status").textContent = error.message; }
 };
-loadInbox();
+Promise.all([loadInbox(), loadAgentRun()]);
